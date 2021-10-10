@@ -31,9 +31,7 @@ fun NotesNavGraph() {
             }
         }
         composable(Destinations.ADD_NOTE_ROUTE) {
-            AddNoteScreen(changeStatusBarColor) {
-                navController.navigateUp()
-            }
+            AddNoteScreen(changeStatusBarColor, navController::navigateUp)
         }
     }
 }

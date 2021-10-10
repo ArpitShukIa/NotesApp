@@ -23,18 +23,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arpit.notes.R
-import com.arpit.notes.ui.theme.NoteColor0
 import com.arpit.notes.ui.theme.noteColors
+import kotlinx.coroutines.flow.collect
 
 @ExperimentalAnimationApi
 @Composable
-fun AddNoteScreen(changeStatusBarColor: (Color) -> Unit, navigateBack: () -> Unit) {
+fun AddNoteScreen(
+    changeStatusBarColor: (Color) -> Unit,
+    navigateBack: () -> Unit,
+    viewModel: AddNoteViewModel = viewModel()
+) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
-    var currentNoteColor by remember { mutableStateOf(NoteColor0) }
-    val updateNoteColor: (Color) -> Unit = {
-        changeStatusBarColor(it)
-        currentNoteColor = it
+    val currentNoteColor by viewModel.noteColor.collectAsState()
+
+    LaunchedEffect(true) {
+        viewModel.noteColor.collect {
+            changeStatusBarColor(currentNoteColor)
+        }
     }
 
     Surface(
@@ -49,41 +56,32 @@ fun AddNoteScreen(changeStatusBarColor: (Color) -> Unit, navigateBack: () -> Uni
                 IconButton(onClick = navigateBack) {
                     Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = { isColorPickerOpen = !isColorPickerOpen }) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_palette),
-                            contentDescription = "Choose note color"
-                        )
-                    }
-                    IconButton(onClick = {}) {
-                        Icon(imageVector = Icons.Default.Done, contentDescription = "Save note")
-                    }
+                IconButton(onClick = { isColorPickerOpen = !isColorPickerOpen }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_palette),
+                        contentDescription = "Choose note color"
+                    )
                 }
             }
             AnimatedVisibility(isColorPickerOpen) {
-                NoteColorsRow(updateNoteColor)
+                NoteColorsRow(currentNoteColor, viewModel::updateNoteColor)
             }
         }
     }
 }
 
 @Composable
-fun NoteColorsRow(changeStatusBarColor: (Color) -> Unit) {
-    var selectedColor by remember {
-        mutableStateOf(NoteColor0)
-    }
+fun NoteColorsRow(currentNoteColor: Color, updateNoteColor: (Color) -> Unit) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ) {
         items(noteColors) {
-            NoteColorButton(isSelected = selectedColor == it, color = it) {
-                selectedColor = it
-                changeStatusBarColor(it)
-            }
+            NoteColorButton(
+                isSelected = currentNoteColor == it,
+                color = it,
+                onClick = { updateNoteColor(it) }
+            )
         }
     }
 }
