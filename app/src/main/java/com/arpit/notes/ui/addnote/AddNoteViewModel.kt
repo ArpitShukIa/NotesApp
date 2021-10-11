@@ -1,22 +1,27 @@
 package com.arpit.notes.ui.addnote
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.arpit.notes.ui.theme.noteColors
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.arpit.notes.util.observableStateOf
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class AddNoteViewModel : ViewModel() {
+@HiltViewModel
+class AddNoteViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
-    private val _noteState = MutableStateFlow(NoteState())
-    val noteState: StateFlow<NoteState> = _noteState
+    val noteId = savedStateHandle.get<String>("noteId")
 
-}
+    var noteColor by observableStateOf(noteColors.drop(1).random()) { saveNote() }
+    var noteTitle by observableStateOf("") { saveNote() }
+    var noteDescription by observableStateOf("") { saveNote() }
 
-class NoteState {
-    var noteColor by mutableStateOf(noteColors.drop(1).random())
-    var noteTitle by mutableStateOf("")
-    var noteDescription by mutableStateOf("")
+    private fun saveNote() {
+
+    }
+
 }

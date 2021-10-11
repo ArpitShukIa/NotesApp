@@ -36,6 +36,7 @@ import com.arpit.notes.R
 import com.arpit.notes.ui.theme.noteColors
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
+import kotlinx.coroutines.flow.MutableStateFlow
 
 @ExperimentalAnimationApi
 @Composable
@@ -44,10 +45,9 @@ fun AddNoteScreen(
     viewModel: AddNoteViewModel = viewModel()
 ) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
-    val noteState by viewModel.noteState.collectAsState()
 
     Surface(
-        color = noteState.noteColor,
+        color = viewModel.noteColor,
         modifier = Modifier.fillMaxSize(),
     ) {
         Column(
@@ -72,14 +72,16 @@ fun AddNoteScreen(
                     )
                 }
             }
+
             AnimatedVisibility(isColorPickerOpen) {
-                NoteColorsRow(noteState.noteColor) { noteState.noteColor = it }
+                NoteColorsRow(viewModel.noteColor) { viewModel.noteColor = it }
             }
+
             TitleDescriptionSection(
-                title = noteState.noteTitle,
-                onTitleChange = { noteState.noteTitle = it },
-                description = noteState.noteDescription,
-                onDescriptionChange = { noteState.noteDescription = it },
+                title = viewModel.noteTitle,
+                onTitleChange = { viewModel.noteTitle = it },
+                description = viewModel.noteDescription,
+                onDescriptionChange = { viewModel.noteDescription = it },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
