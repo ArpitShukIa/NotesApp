@@ -31,18 +31,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arpit.notes.R
 import com.arpit.notes.ui.theme.noteColors
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @ExperimentalAnimationApi
 @Composable
 fun AddNoteScreen(
     navigateBack: () -> Unit,
-    viewModel: AddNoteViewModel = viewModel()
+    viewModel: AddNoteViewModel
 ) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
 
@@ -80,8 +78,8 @@ fun AddNoteScreen(
             TitleDescriptionSection(
                 title = viewModel.noteTitle,
                 onTitleChange = { viewModel.noteTitle = it },
-                description = viewModel.noteDescription,
-                onDescriptionChange = { viewModel.noteDescription = it },
+                description = viewModel.noteDesc,
+                onDescriptionChange = { viewModel.noteDesc = it },
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
