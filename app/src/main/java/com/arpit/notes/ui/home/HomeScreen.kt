@@ -8,26 +8,24 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsPadding
 
 @Composable
 fun HomeScreen(
-    changeStatusBarColor: (Color) -> Unit,
     navigateToAddNoteScreen: () -> Unit
 ) {
-    LaunchedEffect(true) {
-        changeStatusBarColor(Color.White)
-    }
     Scaffold(
+        backgroundColor = Color.White,
         floatingActionButton = {
             FloatingActionButton(
-                onClick = navigateToAddNoteScreen
+                onClick = navigateToAddNoteScreen,
+                modifier = Modifier.navigationBarsPadding()
             ) {
                 Icon(
                     imageVector = Icons.Filled.Add,
@@ -39,7 +37,9 @@ fun HomeScreen(
         Text(
             text = "Notes",
             style = TextStyle(fontSize = 24.sp),
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(16.dp)
         )
     }
 }

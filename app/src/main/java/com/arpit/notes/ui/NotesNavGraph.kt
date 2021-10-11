@@ -18,20 +18,22 @@ object Destinations {
 @ExperimentalAnimationApi
 @Composable
 fun NotesNavGraph() {
-    val navController = rememberNavController()
     val systemUiController = rememberSystemUiController()
-    val changeStatusBarColor: (Color) -> Unit = { systemUiController.setStatusBarColor(it) }
+    systemUiController.setSystemBarsColor(Color.Transparent)
+
+    val navController = rememberNavController()
+
     NavHost(
         navController = navController,
         startDestination = Destinations.HOME_ROUTE
     ) {
         composable(Destinations.HOME_ROUTE) {
-            HomeScreen(changeStatusBarColor) {
+            HomeScreen {
                 navController.navigate(Destinations.ADD_NOTE_ROUTE)
             }
         }
         composable(Destinations.ADD_NOTE_ROUTE) {
-            AddNoteScreen(changeStatusBarColor, navController::navigateUp)
+            AddNoteScreen(navController::navigateUp)
         }
     }
 }

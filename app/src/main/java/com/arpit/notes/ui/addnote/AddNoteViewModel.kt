@@ -1,18 +1,22 @@
 package com.arpit.notes.ui.addnote
 
-import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.arpit.notes.ui.theme.NoteColor0
+import com.arpit.notes.ui.theme.noteColors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class AddNoteViewModel : ViewModel() {
 
-    private val _noteColor = MutableStateFlow(NoteColor0)
-    val noteColor: StateFlow<Color> = _noteColor
+    private val _noteState = MutableStateFlow(NoteState())
+    val noteState: StateFlow<NoteState> = _noteState
 
-    fun updateNoteColor(color: Color) {
-        _noteColor.value = color
-    }
+}
 
+class NoteState {
+    var noteColor by mutableStateOf(noteColors.drop(1).random())
+    var noteTitle by mutableStateOf("")
+    var noteDescription by mutableStateOf("")
 }

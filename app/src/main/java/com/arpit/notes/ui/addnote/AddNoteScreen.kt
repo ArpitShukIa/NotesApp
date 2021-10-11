@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
@@ -20,41 +22,48 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.arpit.notes.R
 import com.arpit.notes.ui.theme.noteColors
-import kotlinx.coroutines.flow.collect
+import com.google.accompanist.insets.navigationBarsWithImePadding
+import com.google.accompanist.insets.statusBarsPadding
 
 @ExperimentalAnimationApi
 @Composable
 fun AddNoteScreen(
-    changeStatusBarColor: (Color) -> Unit,
     navigateBack: () -> Unit,
     viewModel: AddNoteViewModel = viewModel()
 ) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
-    val currentNoteColor by viewModel.noteColor.collectAsState()
-
-    LaunchedEffect(true) {
-        viewModel.noteColor.collect {
-            changeStatusBarColor(currentNoteColor)
-        }
-    }
+    val noteState by viewModel.noteState.collectAsState()
 
     Surface(
-        color = currentNoteColor,
-        modifier = Modifier.fillMaxSize()
+        color = noteState.noteColor,
+        modifier = Modifier.fillMaxSize(),
     ) {
-        Column(modifier = Modifier.fillMaxHeight()) {
+        Column(
+            modifier = Modifier
+                .statusBarsPadding()
+                .fillMaxHeight()
+        ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 IconButton(onClick = navigateBack) {
-                    Icon(imageVector = Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(
+                        imageVector = Icons.Default.ArrowBack,
+                        contentDescription = "Back"
+                    )
                 }
                 IconButton(onClick = { isColorPickerOpen = !isColorPickerOpen }) {
                     Icon(
@@ -64,8 +73,15 @@ fun AddNoteScreen(
                 }
             }
             AnimatedVisibility(isColorPickerOpen) {
-                NoteColorsRow(currentNoteColor, viewModel::updateNoteColor)
+                NoteColorsRow(noteState.noteColor) { noteState.noteColor = it }
             }
+            TitleDescriptionSection(
+                title = noteState.noteTitle,
+                onTitleChange = { noteState.noteTitle = it },
+                description = noteState.noteDescription,
+                onDescriptionChange = { noteState.noteDescription = it },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
         }
     }
 }
@@ -74,6 +90,7 @@ fun AddNoteScreen(
 fun NoteColorsRow(currentNoteColor: Color, updateNoteColor: (Color) -> Unit) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 8.dp),
         horizontalArrangement = Arrangement.Center
     ) {
         items(noteColors) {
@@ -113,5 +130,70 @@ fun NoteColorButton(isSelected: Boolean, color: Color, onClick: () -> Unit) {
                 modifier = Modifier.size(20.dp)
             )
         }
+    }
+}
+
+@Composable
+fun TitleDescriptionSection(
+    modifier: Modifier = Modifier,
+    title: String,
+    onTitleChange: (String) -> Unit,
+    description: String,
+    onDescriptionChange: (String) -> Unit
+) {
+    val noteFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(true) {
+        noteFocusRequester.requestFocus()
+    }
+
+    Column(modifier = modifier.fillMaxSize()) {
+        Spacer(modifier = Modifier.height(16.dp))
+        CustomTextField(
+            text = title,
+            onTextChange = onTitleChange,
+            placeholderText = "Title",
+            fontSize = 24.sp,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        CustomTextField(
+            text = description,
+            onTextChange = onDescriptionChange,
+            placeholderText = "Note",
+            fontSize = 18.sp,
+            singleLine = false,
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(noteFocusRequester)
+                .navigationBarsWithImePadding()
+        )
+    }
+}
+
+@Composable
+fun CustomTextField(
+    text: String,
+    onTextChange: (String) -> Unit,
+    placeholderText: String,
+    fontSize: TextUnit,
+    singleLine: Boolean,
+    modifier: Modifier
+) {
+    Box {
+        BasicTextField(
+            value = text,
+            onValueChange = onTextChange,
+            singleLine = singleLine,
+            textStyle = TextStyle(fontSize = fontSize),
+            modifier = modifier
+        )
+        if (text.isEmpty())
+            Text(
+                text = placeholderText,
+                style = TextStyle(fontSize = fontSize),
+                modifier = Modifier.alpha(0.5f),
+            )
     }
 }
