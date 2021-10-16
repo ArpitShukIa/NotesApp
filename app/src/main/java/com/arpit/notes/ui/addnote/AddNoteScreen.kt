@@ -11,10 +11,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Done
@@ -28,6 +25,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -80,8 +78,16 @@ fun AddNoteScreen(
                 onTitleChange = { viewModel.noteTitle = it },
                 description = viewModel.noteDesc,
                 onDescriptionChange = { viewModel.noteDesc = it },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .weight(1f)
             )
+
+            Divider()
+
+            val undoAvailable by viewModel.undoAvailable.collectAsState()
+            val redoAvailable by viewModel.redoAvailable.collectAsState()
+            UndoRedoSection(undoAvailable, viewModel::undo, redoAvailable, viewModel::redo)
         }
     }
 }
@@ -136,10 +142,10 @@ fun NoteColorButton(isSelected: Boolean, color: Color, onClick: () -> Unit) {
 @Composable
 fun TitleDescriptionSection(
     modifier: Modifier = Modifier,
-    title: String,
-    onTitleChange: (String) -> Unit,
-    description: String,
-    onDescriptionChange: (String) -> Unit
+    title: TextFieldValue,
+    onTitleChange: (TextFieldValue) -> Unit,
+    description: TextFieldValue,
+    onDescriptionChange: (TextFieldValue) -> Unit
 ) {
     val noteFocusRequester = remember { FocusRequester() }
 
@@ -167,20 +173,20 @@ fun TitleDescriptionSection(
             modifier = Modifier
                 .fillMaxSize()
                 .focusRequester(noteFocusRequester)
-                .navigationBarsWithImePadding()
         )
     }
 }
 
 @Composable
 fun CustomTextField(
-    text: String,
-    onTextChange: (String) -> Unit,
+    text: TextFieldValue,
+    onTextChange: (TextFieldValue) -> Unit,
     placeholderText: String,
     fontSize: TextUnit,
     singleLine: Boolean,
     modifier: Modifier
 ) {
+
     Box {
         BasicTextField(
             value = text,
@@ -189,11 +195,45 @@ fun CustomTextField(
             textStyle = TextStyle(fontSize = fontSize),
             modifier = modifier
         )
-        if (text.isEmpty())
+        if (text.text.isEmpty())
             Text(
                 text = placeholderText,
                 style = TextStyle(fontSize = fontSize),
                 modifier = Modifier.alpha(0.5f),
             )
+    }
+}
+
+@Composable
+fun UndoRedoSection(
+    undoAvailable: Boolean,
+    onUndo: () -> Unit,
+    redoAvailable: Boolean,
+    onRedo: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsWithImePadding(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        IconButton(
+            enabled = undoAvailable,
+            onClick = onUndo
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_undo),
+                contentDescription = "Undo"
+            )
+        }
+        IconButton(
+            enabled = redoAvailable,
+            onClick = onRedo
+        ) {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_redo),
+                contentDescription = "Redo"
+            )
+        }
     }
 }

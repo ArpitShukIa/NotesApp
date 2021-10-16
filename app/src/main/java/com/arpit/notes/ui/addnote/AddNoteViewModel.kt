@@ -3,12 +3,14 @@ package com.arpit.notes.ui.addnote
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arpit.notes.data.Note
 import com.arpit.notes.data.NotesDao
 import com.arpit.notes.ui.theme.noteColors
+import com.arpit.notes.util.ListWithHistory
 import com.arpit.notes.util.observableStateOf
 import com.arpit.notes.util.randomString
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,10 +31,16 @@ class AddNoteViewModel @Inject constructor(
     private val noteId = note?.id ?: randomString()
 
     private var noteUpdated = false
+    private val listWithHistory = ListWithHistory(TextFieldValue(initialDesc))
 
-    var noteTitle by observableStateOf(initialTitle) { noteUpdated = true }
-    var noteDesc by observableStateOf(initialDesc) { noteUpdated = true }
     var noteColor by observableStateOf(initialColor) { noteUpdated = true }
+    var noteTitle by observableStateOf(TextFieldValue(initialTitle)) { noteUpdated = true }
+    var noteDesc by observableStateOf(TextFieldValue(initialDesc)) {
+        noteUpdated = listWithHistory.notifyChange(it)
+    }
+
+    val undoAvailable = listWithHistory.undoAvailable
+    val redoAvailable = listWithHistory.redoAvailable
 
     init {
         viewModelScope.launch {
@@ -47,12 +55,25 @@ class AddNoteViewModel @Inject constructor(
     }
 
     private suspend fun saveNote() {
-        if (noteTitle.isBlank() && noteDesc.isBlank()) {
+        if (noteTitle.text.isBlank() && noteDesc.text.isBlank()) {
             notesDao.deleteNote(noteId)
         } else {
-            val newNote = Note(noteId, noteTitle.trim(), noteDesc.trim(), noteColor.toArgb())
+            val newNote = Note(
+                id = noteId,
+                title = noteTitle.text.trim(),
+                description = noteDesc.text.trim(),
+                colorArgb = noteColor.toArgb()
+            )
             notesDao.insertNote(newNote)
         }
+    }
+
+    fun undo() {
+        noteDesc = listWithHistory.undo()
+    }
+
+    fun redo() {
+        noteDesc = listWithHistory.redo()
     }
 
 }
