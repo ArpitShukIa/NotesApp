@@ -7,11 +7,22 @@ import kotlinx.coroutines.flow.StateFlow
 
 class ListWithHistory(initialTextFieldValue: TextFieldValue) {
 
-    private val undoList = mutableListOf(initialTextFieldValue)
-    private val redoList = mutableListOf<TextFieldValue>()
-    private var lastTextFieldValue = initialTextFieldValue
-    private var lastCursorPosWhenTextChanged = 0
-    private var lastStateWhenTextChanged = initialTextFieldValue
+    /**
+     * Represents a state similar to [TextFieldValue]
+     *
+     * @param text text stored in [TextFieldValue]
+     * @param cursorPos end index of [TextFieldValue.selection]
+     * @param onlyCursorChange whether this and the previous state differ only in [TextFieldValue.selection]
+     */
+    private data class State(
+        val text: String,
+        val cursorPos: Int,
+        val onlyCursorChange: Boolean = false
+    )
+
+    private val undoList = mutableListOf<State>()
+    private val redoList = mutableListOf<State>()
+    private var currentState = initialTextFieldValue.toState()
 
     private val _undoAvailable = MutableStateFlow(false)
     val undoAvailable: StateFlow<Boolean> = _undoAvailable
@@ -19,44 +30,43 @@ class ListWithHistory(initialTextFieldValue: TextFieldValue) {
     private val _redoAvailable = MutableStateFlow(false)
     val redoAvailable: StateFlow<Boolean> = _redoAvailable
 
-    /**
-     * Updates [lastTextFieldValue] and adds it to the [undoList] if text has changed
-     * @return `true` if some text has changed, `false` if only selection changed
-     */
-    fun notifyChange(value: TextFieldValue): Boolean {
-        val textChanged = value.text != lastStateWhenTextChanged.text
-        if (textChanged) {
+    fun notifyChange(newValue: TextFieldValue): Boolean {
+        val hasTextChanged = currentState.text != newValue.text
+        if (hasTextChanged) {
             redoList.clear()
-            undoList.add(lastTextFieldValue)
-            _undoAvailable.value = true
             _redoAvailable.value = false
-            lastCursorPosWhenTextChanged = value.selection.min
-            lastStateWhenTextChanged = value
         }
-        lastTextFieldValue = value
-        return textChanged
+        undoList.add(currentState)
+        currentState = newValue.toState().copy(onlyCursorChange = !hasTextChanged)
+        _undoAvailable.value = undoList.any { it.text != currentState.text }
+        return hasTextChanged
     }
 
     fun undo(): TextFieldValue {
         check(undoAvailable.value) { "Undo not available" }
-        redoList.add(lastStateWhenTextChanged)
-        lastStateWhenTextChanged = undoList.removeLast().selectionCleared()
-        _undoAvailable.value = undoList.isNotEmpty()
+        if (currentState.onlyCursorChange) {
+            while (undoList.last().onlyCursorChange)
+                undoList.removeLast()
+            redoList.add(undoList.removeLast())
+        } else {
+            redoList.add(currentState)
+        }
+        currentState = undoList.removeLast()
+        _undoAvailable.value = undoList.any { it.text != currentState.text }
         _redoAvailable.value = true
-        return lastStateWhenTextChanged
+        return currentState.toTextFieldValue()
     }
 
     fun redo(): TextFieldValue {
         check(redoAvailable.value) { "Redo not available" }
-        undoList.add(lastStateWhenTextChanged)
-        lastStateWhenTextChanged = redoList.removeLast().selectionCleared()
-        _redoAvailable.value = redoList.isNotEmpty()
+        undoList.add(currentState)
+        currentState = redoList.removeLast()
         _undoAvailable.value = true
-        return lastStateWhenTextChanged
+        _redoAvailable.value = redoList.isNotEmpty()
+        return currentState.toTextFieldValue()
     }
 
-    private fun TextFieldValue.selectionCleared(): TextFieldValue {
-        return TextFieldValue(text, TextRange(selection.max), composition)
-    }
+    private fun TextFieldValue.toState() = State(text, selection.max, false)
 
+    private fun State.toTextFieldValue() = TextFieldValue(text, TextRange(cursorPos))
 }
