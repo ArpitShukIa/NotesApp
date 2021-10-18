@@ -23,6 +23,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arpit.notes.R
 import com.arpit.notes.ui.theme.noteColors
+import com.arpit.notes.util.repeatingClickable
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
 
@@ -217,22 +219,46 @@ fun UndoRedoSection(
             .navigationBarsWithImePadding(),
         horizontalArrangement = Arrangement.Center
     ) {
-        IconButton(
+        UndoRedoButton(
+            painter = painterResource(id = R.drawable.ic_undo),
+            contentDescription = "Undo",
             enabled = undoAvailable,
             onClick = onUndo
-        ) {
-            Icon(
-                painter = painterResource(id = R.drawable.ic_undo),
-                contentDescription = "Undo"
-            )
-        }
-        IconButton(
+        )
+        UndoRedoButton(
+            painter = painterResource(id = R.drawable.ic_redo),
+            contentDescription = "Redo",
             enabled = redoAvailable,
             onClick = onRedo
-        ) {
+        )
+    }
+}
+
+@Composable
+fun UndoRedoButton(
+    painter: Painter,
+    contentDescription: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(48.dp)
+            .repeatingClickable(
+                enabled = enabled,
+                onClick = onClick,
+                initialDelayMillis = 500,
+                delayMillis = 100,
+                interactionSource = remember { MutableInteractionSource() },
+                rippleRadius = 24.dp
+            )
+    ) {
+        val contentAlpha = if (enabled) LocalContentAlpha.current else ContentAlpha.disabled
+        CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
             Icon(
-                painter = painterResource(id = R.drawable.ic_redo),
-                contentDescription = "Redo"
+                painter = painter,
+                contentDescription = contentDescription
             )
         }
     }
