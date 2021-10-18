@@ -31,12 +31,15 @@ class AddNoteViewModel @Inject constructor(
     private val noteId = note?.id ?: randomString()
 
     private var noteUpdated = false
+    private var lastChangeWasUndoRedo = false
     private val listWithHistory = ListWithHistory(TextFieldValue(initialDesc))
 
     var noteColor by observableStateOf(initialColor) { noteUpdated = true }
     var noteTitle by observableStateOf(TextFieldValue(initialTitle)) { noteUpdated = true }
     var noteDesc by observableStateOf(TextFieldValue(initialDesc)) {
-        noteUpdated = listWithHistory.notifyChange(it)
+        if (!lastChangeWasUndoRedo)
+            noteUpdated = listWithHistory.notifyChange(it)
+        lastChangeWasUndoRedo = false
     }
 
     val undoAvailable = listWithHistory.undoAvailable
@@ -69,10 +72,12 @@ class AddNoteViewModel @Inject constructor(
     }
 
     fun undo() {
+        lastChangeWasUndoRedo = true
         noteDesc = listWithHistory.undo()
     }
 
     fun redo() {
+        lastChangeWasUndoRedo = true
         noteDesc = listWithHistory.redo()
     }
 
