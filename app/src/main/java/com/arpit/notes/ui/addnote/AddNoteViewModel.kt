@@ -37,8 +37,8 @@ class AddNoteViewModel @Inject constructor(
     var noteColor by observableStateOf(initialColor) { noteUpdated = true }
     var noteTitle by observableStateOf(TextFieldValue(initialTitle)) { noteUpdated = true }
     var noteDesc by observableStateOf(TextFieldValue(initialDesc)) {
-        if (!lastChangeWasUndoRedo)
-            noteUpdated = listWithHistory.notifyChange(it)
+        if (!lastChangeWasUndoRedo && listWithHistory.notifyChange(it))
+            noteUpdated = true
         lastChangeWasUndoRedo = false
     }
 

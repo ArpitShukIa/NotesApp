@@ -39,8 +39,8 @@ import com.google.accompanist.insets.statusBarsPadding
 @ExperimentalAnimationApi
 @Composable
 fun AddNoteScreen(
-    navigateBack: () -> Unit,
-    viewModel: AddNoteViewModel
+    viewModel: AddNoteViewModel,
+    navigateBack: () -> Unit
 ) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
 

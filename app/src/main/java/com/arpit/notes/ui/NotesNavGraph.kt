@@ -20,7 +20,7 @@ object Destinations {
 @Composable
 fun NotesNavGraph() {
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(Color.Transparent)
+    systemUiController.setSystemBarsColor(Color.White.copy(alpha = 0.8f))
 
     val navController = rememberNavController()
 
@@ -29,12 +29,12 @@ fun NotesNavGraph() {
         startDestination = Destinations.HOME_ROUTE
     ) {
         composable(Destinations.HOME_ROUTE) {
-            HomeScreen {
+            HomeScreen(hiltViewModel()) {
                 navController.navigate(Destinations.ADD_NOTE_ROUTE)
             }
         }
         composable(Destinations.ADD_NOTE_ROUTE) {
-            AddNoteScreen(navController::navigateUp, hiltViewModel())
+            AddNoteScreen(hiltViewModel(), navController::navigateUp)
         }
     }
 }
