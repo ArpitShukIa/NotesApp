@@ -7,7 +7,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -157,22 +156,20 @@ fun TitleDescriptionSection(
     newNote: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 16.dp)
+    Column(
+        modifier = modifier.fillMaxSize()
     ) {
-        item {
-            NoteTitle(
-                title = title,
-                onTitleChange = onTitleChange
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            NoteDescription(
-                description = description,
-                onDescriptionChange = onDescriptionChange,
-                newNote = newNote
-            )
-        }
+        Spacer(modifier = Modifier.height(16.dp))
+        NoteTitle(
+            title = title,
+            onTitleChange = onTitleChange
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        NoteDescription(
+            description = description,
+            onDescriptionChange = onDescriptionChange,
+            newNote = newNote
+        )
     }
 }
 
