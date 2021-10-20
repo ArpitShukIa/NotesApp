@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,8 +26,8 @@ import com.arpit.notes.data.Note
 import com.arpit.notes.ui.theme.NoteColor0
 import com.arpit.notes.ui.theme.NoteColor1
 import com.arpit.notes.util.thenIf
+import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
-import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.insets.statusBarsPadding
 
 @Composable
@@ -49,7 +50,9 @@ fun HomeScreen(
             }
         }
     ) {
-        LazyColumn(contentPadding = PaddingValues(bottom = 80.dp)) {
+        val insets = LocalWindowInsets.current
+        val navBarBottom = with(LocalDensity.current) { insets.navigationBars.bottom.toDp() }
+        LazyColumn(contentPadding = PaddingValues(bottom = 80.dp + navBarBottom)) {
             item {
                 Text(
                     text = "Notes",
@@ -63,12 +66,6 @@ fun HomeScreen(
                 NoteListItem(note = it, navigateToAddNoteScreen)
             }
         }
-        Box(
-            modifier = Modifier
-                .statusBarsHeight()
-                .fillMaxWidth()
-                .background(Color.White.copy(alpha = 0.8f))
-        )
     }
 }
 

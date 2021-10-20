@@ -28,9 +28,25 @@ object Destinations {
 @Composable
 fun NotesNavGraph() {
     val systemUiController = rememberSystemUiController()
-    systemUiController.setSystemBarsColor(Color.Transparent, darkIcons = true)
-
     val navController = rememberNavController()
+
+    navController.addOnDestinationChangedListener { _, navDestination, _ ->
+        val (statusBarBgAlpha, navBarBgAlpha) =
+            when (navDestination.route) {
+                HOME_ROUTE -> 0.8f to 0.9f
+                ADD_NOTE_ROUTE -> 0f to 0.01f
+                else -> 1f to 1f
+            }
+
+        systemUiController.setStatusBarColor(
+            Color.White.copy(alpha = statusBarBgAlpha),
+            darkIcons = true
+        )
+        systemUiController.setNavigationBarColor(
+            Color.White.copy(alpha = navBarBgAlpha),
+            darkIcons = true
+        )
+    }
 
     NavHost(
         navController = navController,
