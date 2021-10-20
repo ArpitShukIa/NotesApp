@@ -5,7 +5,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class ListWithHistory(initialTextFieldValue: TextFieldValue) {
+class ListWithHistory {
 
     /**
      * Represents a state similar to [TextFieldValue]
@@ -15,20 +15,24 @@ class ListWithHistory(initialTextFieldValue: TextFieldValue) {
      * @param onlyCursorChange whether this and the previous state differ only in [TextFieldValue.selection]
      */
     private data class State(
-        val text: String,
-        val cursorPos: Int,
+        val text: String = "",
+        val cursorPos: Int = 0,
         val onlyCursorChange: Boolean = false
     )
 
     private val undoList = mutableListOf<State>()
     private val redoList = mutableListOf<State>()
-    private var currentState = initialTextFieldValue.toState()
+    private var currentState = State()
 
     private val _undoAvailable = MutableStateFlow(false)
     val undoAvailable: StateFlow<Boolean> = _undoAvailable
 
     private val _redoAvailable = MutableStateFlow(false)
     val redoAvailable: StateFlow<Boolean> = _redoAvailable
+
+    fun updateCurrentState(value: TextFieldValue) {
+        currentState = value.toState()
+    }
 
     fun notifyChange(newValue: TextFieldValue): Boolean {
         val hasTextChanged = currentState.text != newValue.text
@@ -66,7 +70,7 @@ class ListWithHistory(initialTextFieldValue: TextFieldValue) {
         return currentState.toTextFieldValue()
     }
 
-    private fun TextFieldValue.toState() = State(text, selection.max, false)
+    private fun TextFieldValue.toState() = State(text, selection.max)
 
     private fun State.toTextFieldValue() = TextFieldValue(text, TextRange(cursorPos))
 }

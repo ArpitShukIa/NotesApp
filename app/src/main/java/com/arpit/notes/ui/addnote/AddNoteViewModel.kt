@@ -1,7 +1,9 @@
 package com.arpit.notes.ui.addnote
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
@@ -9,9 +11,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.arpit.notes.data.Note
 import com.arpit.notes.data.NotesDao
-import com.arpit.notes.ui.theme.noteColors
+import com.arpit.notes.ui.Destinations
+import com.arpit.notes.ui.theme.NoteColor0
 import com.arpit.notes.util.ListWithHistory
-import com.arpit.notes.util.observableStateOf
 import com.arpit.notes.util.randomString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
@@ -24,29 +26,33 @@ class AddNoteViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
 
-    private val note = savedStateHandle.get<Note>("note")
-    private val initialTitle = note?.title ?: ""
-    private val initialDesc = note?.description ?: ""
-    private val initialColor = note?.color ?: noteColors.drop(1).random()
-    private val noteId = note?.id ?: randomString()
-
+    private val noteIdArg = savedStateHandle.get<String>(Destinations.NOTE_ID_KEY)
+    private val noteId = noteIdArg ?: randomString()
     private var noteUpdated = false
-    private var lastChangeWasUndoRedo = false
-    private val listWithHistory = ListWithHistory(TextFieldValue(initialDesc))
+    private val listWithHistory = ListWithHistory()
+    val newNote = noteIdArg == null
 
-    var noteColor by observableStateOf(initialColor) { noteUpdated = true }
-    var noteTitle by observableStateOf(TextFieldValue(initialTitle)) { noteUpdated = true }
-    var noteDesc by observableStateOf(TextFieldValue(initialDesc)) {
-        if (!lastChangeWasUndoRedo && listWithHistory.notifyChange(it))
-            noteUpdated = true
-        lastChangeWasUndoRedo = false
-    }
+    var noteDesc by mutableStateOf(TextFieldValue(""))
+        private set
+
+    var noteTitle by mutableStateOf("")
+        private set
+
+    var noteColor by mutableStateOf(NoteColor0)
+        private set
 
     val undoAvailable = listWithHistory.undoAvailable
     val redoAvailable = listWithHistory.redoAvailable
 
     init {
         viewModelScope.launch {
+            if (!newNote) {
+                val note = notesDao.getNote(noteId)
+                noteTitle = note.title
+                noteDesc = TextFieldValue(note.description)
+                noteColor = note.color
+                listWithHistory.updateCurrentState(noteDesc)
+            }
             while (true) {
                 if (noteUpdated) {
                     noteUpdated = false
@@ -58,12 +64,12 @@ class AddNoteViewModel @Inject constructor(
     }
 
     private suspend fun saveNote() {
-        if (noteTitle.text.isBlank() && noteDesc.text.isBlank()) {
+        if (noteTitle.isBlank() && noteDesc.text.isBlank()) {
             notesDao.deleteNote(noteId)
         } else {
             val newNote = Note(
                 id = noteId,
-                title = noteTitle.text.trim(),
+                title = noteTitle.trim(),
                 description = noteDesc.text.trim(),
                 colorArgb = noteColor.toArgb()
             )
@@ -71,13 +77,27 @@ class AddNoteViewModel @Inject constructor(
         }
     }
 
+    fun updateTitle(title: String) {
+        noteTitle = title
+        noteUpdated = true
+    }
+
+    fun updateDescription(description: TextFieldValue) {
+        noteDesc = description
+        if (listWithHistory.notifyChange(description))
+            noteUpdated = true
+    }
+
+    fun updateNoteColor(color: Color) {
+        noteColor = color
+        noteUpdated = true
+    }
+
     fun undo() {
-        lastChangeWasUndoRedo = true
         noteDesc = listWithHistory.undo()
     }
 
     fun redo() {
-        lastChangeWasUndoRedo = true
         noteDesc = listWithHistory.redo()
     }
 

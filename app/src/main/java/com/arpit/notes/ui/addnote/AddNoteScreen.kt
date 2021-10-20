@@ -7,6 +7,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -18,16 +19,16 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.arpit.notes.R
@@ -36,6 +37,7 @@ import com.arpit.notes.util.repeatingClickable
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import com.google.accompanist.insets.statusBarsPadding
 
+@ExperimentalComposeUiApi
 @ExperimentalAnimationApi
 @Composable
 fun AddNoteScreen(
@@ -43,6 +45,7 @@ fun AddNoteScreen(
     navigateBack: () -> Unit
 ) {
     var isColorPickerOpen by rememberSaveable { mutableStateOf(false) }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Surface(
         color = viewModel.noteColor,
@@ -57,7 +60,10 @@ fun AddNoteScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                IconButton(onClick = navigateBack) {
+                IconButton(onClick = {
+                    keyboardController?.hide()
+                    navigateBack()
+                }) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back"
@@ -72,14 +78,15 @@ fun AddNoteScreen(
             }
 
             AnimatedVisibility(isColorPickerOpen) {
-                NoteColorsRow(viewModel.noteColor) { viewModel.noteColor = it }
+                NoteColorsRow(viewModel.noteColor, viewModel::updateNoteColor)
             }
 
             TitleDescriptionSection(
                 title = viewModel.noteTitle,
-                onTitleChange = { viewModel.noteTitle = it },
+                onTitleChange = viewModel::updateTitle,
                 description = viewModel.noteDesc,
-                onDescriptionChange = { viewModel.noteDesc = it },
+                onDescriptionChange = viewModel::updateDescription,
+                newNote = viewModel.newNote,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .weight(1f)
@@ -143,64 +150,80 @@ fun NoteColorButton(isSelected: Boolean, color: Color, onClick: () -> Unit) {
 
 @Composable
 fun TitleDescriptionSection(
-    modifier: Modifier = Modifier,
-    title: TextFieldValue,
-    onTitleChange: (TextFieldValue) -> Unit,
+    title: String,
+    onTitleChange: (String) -> Unit,
     description: TextFieldValue,
-    onDescriptionChange: (TextFieldValue) -> Unit
+    onDescriptionChange: (TextFieldValue) -> Unit,
+    newNote: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    val noteFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(true) {
-        noteFocusRequester.requestFocus()
-    }
-
-    Column(modifier = modifier.fillMaxSize()) {
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(
-            text = title,
-            onTextChange = onTitleChange,
-            placeholderText = "Title",
-            fontSize = 24.sp,
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        CustomTextField(
-            text = description,
-            onTextChange = onDescriptionChange,
-            placeholderText = "Note",
-            fontSize = 18.sp,
-            singleLine = false,
-            modifier = Modifier
-                .fillMaxSize()
-                .focusRequester(noteFocusRequester)
-        )
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 16.dp)
+    ) {
+        item {
+            NoteTitle(
+                title = title,
+                onTitleChange = onTitleChange
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            NoteDescription(
+                description = description,
+                onDescriptionChange = onDescriptionChange,
+                newNote = newNote
+            )
+        }
     }
 }
 
 @Composable
-fun CustomTextField(
-    text: TextFieldValue,
-    onTextChange: (TextFieldValue) -> Unit,
-    placeholderText: String,
-    fontSize: TextUnit,
-    singleLine: Boolean,
-    modifier: Modifier
+fun NoteTitle(
+    title: String,
+    onTitleChange: (String) -> Unit
 ) {
+    Box {
+        BasicTextField(
+            value = title,
+            onValueChange = onTitleChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.h6,
+            modifier = Modifier.fillMaxWidth()
+        )
+        if (title.isEmpty())
+            Text(
+                text = "Title",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.alpha(0.5f),
+            )
+    }
+}
+
+@Composable
+fun NoteDescription(
+    description: TextFieldValue,
+    onDescriptionChange: (TextFieldValue) -> Unit,
+    newNote: Boolean
+) {
+    val noteFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        if (newNote)
+            noteFocusRequester.requestFocus()
+    }
 
     Box {
         BasicTextField(
-            value = text,
-            onValueChange = onTextChange,
-            singleLine = singleLine,
-            textStyle = TextStyle(fontSize = fontSize),
-            modifier = modifier
+            value = description,
+            onValueChange = onDescriptionChange,
+            textStyle = MaterialTheme.typography.body1.copy(fontSize = 18.sp, lineHeight = 28.sp),
+            modifier = Modifier
+                .fillMaxSize()
+                .focusRequester(noteFocusRequester)
         )
-        if (text.text.isEmpty())
+        if (description.text.isEmpty())
             Text(
-                text = placeholderText,
-                style = TextStyle(fontSize = fontSize),
+                text = "Note",
+                style = MaterialTheme.typography.body1.copy(fontSize = 18.sp, lineHeight = 28.sp),
                 modifier = Modifier.alpha(0.5f),
             )
     }

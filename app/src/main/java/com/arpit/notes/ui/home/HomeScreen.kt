@@ -26,19 +26,20 @@ import com.arpit.notes.ui.theme.NoteColor0
 import com.arpit.notes.ui.theme.NoteColor1
 import com.arpit.notes.util.thenIf
 import com.google.accompanist.insets.navigationBarsPadding
+import com.google.accompanist.insets.statusBarsHeight
 import com.google.accompanist.insets.statusBarsPadding
 
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
-    navigateToAddNoteScreen: () -> Unit
+    navigateToAddNoteScreen: (String?) -> Unit
 ) {
     val notes by viewModel.notes.collectAsState(initial = emptyList())
     Scaffold(
         backgroundColor = Color.White,
         floatingActionButton = {
             FloatingActionButton(
-                onClick = navigateToAddNoteScreen,
+                onClick = { navigateToAddNoteScreen(null) },
                 modifier = Modifier.navigationBarsPadding()
             ) {
                 Icon(
@@ -48,27 +49,31 @@ fun HomeScreen(
             }
         }
     ) {
-        Column {
-            LazyColumn(contentPadding = PaddingValues(bottom = 80.dp)) {
-                item {
-                    Text(
-                        text = "Notes",
-                        style = MaterialTheme.typography.h5,
-                        modifier = Modifier
-                            .statusBarsPadding()
-                            .padding(16.dp)
-                    )
-                }
-                items(notes) {
-                    NoteListItem(note = it)
-                }
+        LazyColumn(contentPadding = PaddingValues(bottom = 80.dp)) {
+            item {
+                Text(
+                    text = "Notes",
+                    style = MaterialTheme.typography.h5,
+                    modifier = Modifier
+                        .statusBarsPadding()
+                        .padding(16.dp)
+                )
+            }
+            items(notes) {
+                NoteListItem(note = it, navigateToAddNoteScreen)
             }
         }
+        Box(
+            modifier = Modifier
+                .statusBarsHeight()
+                .fillMaxWidth()
+                .background(Color.White.copy(alpha = 0.8f))
+        )
     }
 }
 
 @Composable
-fun NoteListItem(note: Note) {
+fun NoteListItem(note: Note, navigateToAddNoteScreen: (String?) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -82,7 +87,7 @@ fun NoteListItem(note: Note) {
                     shape = RoundedCornerShape(8.dp)
                 )
             }
-            .clickable { /* TODO */}
+            .clickable { navigateToAddNoteScreen(note.id) }
             .padding(16.dp)
     ) {
         if (note.title.isNotEmpty()) {
@@ -114,6 +119,7 @@ fun NoteListPreview() {
             title = "Hello World",
             description = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
             colorArgb = NoteColor1.toArgb()
-        )
+        ),
+        navigateToAddNoteScreen = {}
     )
 }
