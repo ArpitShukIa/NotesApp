@@ -13,7 +13,9 @@ data class Note(
     val id: String,
     val title: String,
     val description: String,
-    val colorArgb: Int
+    val colorArgb: Int,
+    val createdAt: Long,
+    val lastUpdatedAt: Long
 ) : Parcelable {
     val color: Color
         get() = Color(colorArgb)

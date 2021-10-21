@@ -28,8 +28,9 @@ class AddNoteViewModel @Inject constructor(
 
     private val noteIdArg = savedStateHandle.get<String>(Destinations.NOTE_ID_KEY)
     private val noteId = noteIdArg ?: randomString()
-    private var noteUpdated = false
     private val listWithHistory = ListWithHistory()
+    private var noteUpdated = false
+    private var noteCreatedAt: Long? = null
     val newNote = noteIdArg == null
 
     var noteDesc by mutableStateOf(TextFieldValue(""))
@@ -51,6 +52,7 @@ class AddNoteViewModel @Inject constructor(
                 noteTitle = note.title
                 noteDesc = TextFieldValue(note.description)
                 noteColor = note.color
+                noteCreatedAt = note.createdAt
                 listWithHistory.updateCurrentState(noteDesc)
             }
             while (true) {
@@ -71,7 +73,9 @@ class AddNoteViewModel @Inject constructor(
                 id = noteId,
                 title = noteTitle.trim(),
                 description = noteDesc.text.trim(),
-                colorArgb = noteColor.toArgb()
+                colorArgb = noteColor.toArgb(),
+                createdAt = noteCreatedAt ?: System.currentTimeMillis(),
+                lastUpdatedAt = System.currentTimeMillis()
             )
             notesDao.insertNote(newNote)
         }
@@ -95,10 +99,12 @@ class AddNoteViewModel @Inject constructor(
 
     fun undo() {
         noteDesc = listWithHistory.undo()
+        noteUpdated = true
     }
 
     fun redo() {
         noteDesc = listWithHistory.redo()
+        noteUpdated = true
     }
 
 }
