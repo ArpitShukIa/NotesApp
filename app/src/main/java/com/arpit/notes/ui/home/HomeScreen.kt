@@ -12,6 +12,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -21,11 +22,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.arpit.notes.data.NoteItem
+import com.arpit.notes.ui.home.HomeViewModel.HomeScreenEvents.OpenNote
 import com.arpit.notes.ui.theme.NoteColor0
 import com.arpit.notes.util.thenIf
 import com.google.accompanist.insets.LocalWindowInsets
 import com.google.accompanist.insets.navigationBarsPadding
 import com.google.accompanist.insets.statusBarsPadding
+import kotlinx.coroutines.flow.collect
 
 @ExperimentalFoundationApi
 @Composable
@@ -34,6 +37,14 @@ fun HomeScreen(
     navigateToAddNoteScreen: (String?) -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.homeScreenEvents.collect { event ->
+            when (event) {
+                is OpenNote -> navigateToAddNoteScreen(event.noteId)
+            }
+        }
+    }
 
     Scaffold(
         backgroundColor = Color.White,
