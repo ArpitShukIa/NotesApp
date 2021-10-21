@@ -20,3 +20,8 @@ data class Note(
     val color: Color
         get() = Color(colorArgb)
 }
+
+data class NoteItem(
+    val note: Note,
+    val selected: Boolean
+)
