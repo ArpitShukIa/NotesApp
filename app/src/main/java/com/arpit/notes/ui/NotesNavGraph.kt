@@ -31,11 +31,14 @@ fun NotesNavGraph() {
     val navController = rememberNavController()
 
     navController.addOnDestinationChangedListener { _, navDestination, _ ->
+        val route = navDestination.route
+            ?.substringBefore('?')
+            ?.substringBefore('/')
         val (statusBarBgAlpha, navBarBgAlpha) =
-            when (navDestination.route) {
+            when (route) {
                 HOME_ROUTE -> 0.8f to 0.9f
                 ADD_NOTE_ROUTE -> 0f to 0.01f
-                else -> 1f to 1f
+                else -> throw IllegalStateException("Unknown destination")
             }
 
         systemUiController.setStatusBarColor(
