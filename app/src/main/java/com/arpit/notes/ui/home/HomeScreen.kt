@@ -74,7 +74,7 @@ fun NoteListItem(note: Note, navigateToAddNoteScreen: (String?) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
             .clip(RoundedCornerShape(8.dp))
             .background(note.color)
             .thenIf(note.color == NoteColor0) {
@@ -105,18 +105,4 @@ fun NoteListItem(note: Note, navigateToAddNoteScreen: (String?) -> Unit) {
             )
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun NoteListPreview() {
-    NoteListItem(
-        note = Note(
-            id = "",
-            title = "Hello World",
-            description = "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.",
-            colorArgb = NoteColor1.toArgb()
-        ),
-        navigateToAddNoteScreen = {}
-    )
 }
